@@ -1,9 +1,21 @@
 const express = require('express');
 const http = require('http');
-const { title } = require('process');
 const { Server } = require('socket.io');
+const dotenv = require('dotenv');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes.js');
+const contactRoutes = require('./routes/contactRoutes.js');
+const socketAuth = require('./middlewares/socketAuth.js');
+const messageRoutes = require('./routes/messageRoutes.js');
+const Message = require('./models/message.js');
+
+dotenv.config();
+
 
 const app = express();
+
+app.use(express.json());
+
 const server = http.createServer(app);
 const io = new Server(server);
 
@@ -11,25 +23,72 @@ app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.static('public'));
 
+
+app.use('/api/auth', authRoutes);
+app.use('/api/contacts', contactRoutes);
+app.use('/api/messages', messageRoutes);
+
 app.get('/', (req, res) => {
     res.render('index', { title: 'Simple Chat App' });
 });
+app.get('/register', (req, res) => {
+    res.render('register', { title: 'Register' });
+});
+app.get('/login', (req, res) => {
+    res.render('login', { title: 'Login' });
+});
+
+io.use(socketAuth);
+const onlineUsers = new Map(); // userId -> socket.id store karega
 
 io.on('connection', (socket) => {
-    console.log(`[Server] User connected: ${socket.id}`);
+    console.log(`[Server] User connected ID: ${socket.id} Username: ${socket.username}`);
+    onlineUsers.set(socket.userId, socket.id);
 
-    socket.on('chat-message', (msg)=>{
+    socket.on('chat-message', (msg) => {
+
+        const { text, toUserId } = msg;
         // console.log(`[Server] Message received: ${msg}`);
-        console.log(`[Server] ${msg.user}: ${msg.text}`);
-        io.emit('chat-message', msg);
+        console.log(`[Server] ${socket.username} -> ${toUserId}: ${text}`);
+
+        const newMessage = new Message({
+            from: socket.userId,
+            to: toUserId,
+            text: text
+        });
+
+        newMessage.save();
+
+        const targetSocketId = onlineUsers.get(toUserId);
+
+        console.log('Target Socket ID found:', targetSocketId); // YE LINE ADD KARO
+        console.log('Current online users:', onlineUsers); // YE BHI ADD KARO
+
+
+        const messagePayload = {
+            user: socket.username,
+            fromUserId: socket.userId,
+            text: text
+        };
+
+        if (targetSocketId) {
+
+            io.to(targetSocketId).emit('chat-message', messagePayload);
+        }
+
+        socket.emit('chat-message', messagePayload);
+
     });
 
     socket.on('disconnect', () => {
         console.log(`[Server] User disconnected: ${socket.id}`);
+        onlineUsers.delete(socket.userId);
     });
 });
 
-const PORT = 5000;
+connectDB();
+
+const PORT = process.env.PORT;
 
 server.listen(PORT, () => {
     console.log(`[Ready] Server running on port ${PORT}`);

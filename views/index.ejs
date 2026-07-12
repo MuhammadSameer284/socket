@@ -1,11 +1,41 @@
 <%- include('partials/header') %>
 
-<div id="messages"></div>
+    <div class="topbar">
+        Logged in as: <strong id="loggedInUser"></strong>
+        <a href="#" id="logoutBtn">Logout</a>
+    </div>
 
-<form id="chatForm">
-    <input type="text" id="messageInput" placeholder="Type a message" autocomplete="off">
-    <button type="submit">Send</button>
-</form>
+    <div class="chat-wrapper">
 
+        <!-- LEFT SIDE: Contacts -->
+        <div class="sidebar">
+            <h3>My Contacts</h3>
+            <div id="contactsList"></div>
 
-<%- include('partials/footer') %>
+            <hr>
+            <h4>Add Contact</h4>
+            <input type="email" id="contactEmail" placeholder="Enter email">
+            <button id="addContactBtn">Add</button>
+            <p id="contactMsg"></p>
+        </div>
+
+        <!-- RIGHT SIDE: Chat -->
+        <div class="chat-area">
+            <div id="chatHeader" class="chat-header">
+                <strong id="activeChatName"></strong>
+                <button id="closeChatBtn">Close ✕</button>
+            </div>
+
+            <div id="messages"></div>
+
+            <form id="chatForm">
+                <input type="text" id="messageInput" placeholder="Type a message" autocomplete="off">
+                <button type="submit">Send</button>
+            </form>
+
+            <p id="noChatSelected">Select a contact to start chatting</p>
+        </div>
+
+    </div>
+
+    <%- include('partials/footer') %>

@@ -1,0 +1,42 @@
+<%- include('partials/header') %>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Create Account</h2>
+            <p class="auth-subtitle">Join and start chatting</p>
+
+            <input type="text" id="username" placeholder="Username">
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button id="registerBtn">Register</button>
+
+            <p id="errorMsg" class="error-msg"></p>
+            <p class="switch-link">Already have an account? <a href="/login">Login</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    window.location.href = '/login';
+                } else {
+                    document.getElementById('errorMsg').innerText = data.message;
+                }
+            } catch (error) {
+                document.getElementById('errorMsg').innerText = 'Something went wrong';
+            }
+        });
+    </script>
